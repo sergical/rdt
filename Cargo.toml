@@ -1,0 +1,49 @@
+[package]
+name = "rdt"
+version = "0.1.0"
+edition = "2024"
+description = "Reddit CLI for AI agents - search and interact with Reddit from the command line"
+license = "MIT"
+repository = "https://github.com/user/rdt"
+
+[dependencies]
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# HTTP client
+reqwest = { version = "0.12", features = ["json"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# OAuth2
+oauth2 = "4"
+
+# Config
+dirs = "6"
+toml = "0.8"
+
+# Error handling
+thiserror = "2"
+anyhow = "1"
+
+# AWS Bedrock (for Claude Haiku)
+aws-config = { version = "1", features = ["behavior-version-latest"] }
+aws-sdk-bedrockruntime = "1"
+
+# NL pattern matching
+regex = "1"
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# URL handling
+url = "2"
+urlencoding = "2"
+
+[dev-dependencies]
+tokio-test = "0.4"
