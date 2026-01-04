@@ -1,0 +1,121 @@
+# rdt
+
+Reddit CLI for AI agents. Like `gh` for GitHub, but for Reddit.
+
+## Features
+
+- **JSON output by default** - designed for AI agent consumption
+- **Natural language search** - `rdt search "rust in programming"` automatically searches r/programming
+- **Pattern matching** - common queries resolved instantly without AI
+- **AI fallback** - complex queries routed to Claude Haiku on AWS Bedrock
+
+## Installation
+
+```bash
+cargo install --path .
+```
+
+## Usage
+
+### Search
+
+```bash
+# Simple search
+rdt search "rust async"
+
+# Natural language (pattern matched)
+rdt search "rust in programming"        # searches r/programming
+rdt search "top rust"                   # sorts by top
+rdt search "recent golang tutorials"    # sorts by new
+
+# Explicit flags
+rdt search "rust" --subreddit programming --sort top --limit 10
+```
+
+### Subreddits
+
+```bash
+rdt subreddit info rust
+rdt subreddit posts rust --sort hot --limit 20
+```
+
+### Users
+
+```bash
+rdt user info spez
+rdt user posts spez --limit 10
+```
+
+### Posts
+
+```bash
+rdt post get <post_id>
+rdt post comments <post_id> --limit 50
+```
+
+### Auth
+
+```bash
+rdt auth status
+rdt auth login   # OAuth flow (coming soon)
+rdt auth logout
+```
+
+## Output Format
+
+All commands output JSON by default:
+
+```json
+{
+  "query": "rust",
+  "subreddit": "programming",
+  "sort": "relevance",
+  "posts": [
+    {
+      "id": "abc123",
+      "title": "Why Rust is Great",
+      "author": "rustacean",
+      "subreddit": "programming",
+      "url": "https://reddit.com/r/programming/comments/abc123/...",
+      "score": 1234,
+      "num_comments": 56,
+      "created_utc": 1234567890.0
+    }
+  ],
+  "count": 1
+}
+```
+
+Use `--format table` for human-readable output (coming soon).
+
+## Configuration
+
+Config stored at `~/.config/rdt/config.toml`:
+
+```toml
+[reddit]
+client_id = "your_client_id"
+client_secret = "your_client_secret"
+
+[aws]
+region = "us-east-1"
+bedrock_model_id = "anthropic.claude-3-haiku-20240307-v1:0"
+```
+
+## Natural Language Patterns
+
+These patterns are matched instantly (no AI needed):
+
+| Pattern | Example | Result |
+|---------|---------|--------|
+| `<query> in <subreddit>` | "rust in programming" | subreddit=programming |
+| `top <query>` | "top rust tutorials" | sort=top |
+| `recent <query>` | "recent news" | sort=new |
+| `<query> from this week` | "rust from this week" | time=week |
+| `<query> limit <n>` | "rust limit 5" | limit=5 |
+
+Complex queries fall back to Claude Haiku on AWS Bedrock.
+
+## License
+
+MIT
