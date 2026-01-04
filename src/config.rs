@@ -94,6 +94,6 @@ impl Config {
         self.aws
             .bedrock_model_id
             .clone()
-            .unwrap_or_else(|| "anthropic.claude-3-haiku-20240307-v1:0".to_string())
+            .unwrap_or_else(|| "us.anthropic.claude-haiku-4-5-20251001-v1:0".to_string())
     }
 }
