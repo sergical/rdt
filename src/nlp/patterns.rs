@@ -14,31 +14,128 @@ struct Pattern {
 
 impl PatternMatcher {
     pub fn new() -> Self {
+        // IMPORTANT: More specific patterns must come BEFORE simpler ones!
+        // e.g., "top <query> from this week" must come before "top <query>"
         let patterns = vec![
-            // "<query> in <subreddit>"
+            // === Most specific patterns first (4 components) ===
+
+            // "top <query> in <subreddit> from this week"
             Pattern {
-                regex: Regex::new(r"(?i)^(.+?)\s+in\s+r?/?(\w+)$").unwrap(),
+                regex: Regex::new(
+                    r"(?i)^top\s+(.+?)\s+in\s+r?/?(\w+)\s+from\s+this\s+week$",
+                )
+                .unwrap(),
+                extractor: Box::new(|caps| SearchParams {
+                    query: caps[1].trim().to_string(),
+                    subreddit: Some(caps[2].to_string()),
+                    sort: "top".to_string(),
+                    time: "week".to_string(),
+                    ..Default::default()
+                }),
+            },
+            // "recent <query> in <subreddit> from this week"
+            Pattern {
+                regex: Regex::new(
+                    r"(?i)^recent\s+(.+?)\s+in\s+r?/?(\w+)\s+from\s+this\s+week$",
+                )
+                .unwrap(),
+                extractor: Box::new(|caps| SearchParams {
+                    query: caps[1].trim().to_string(),
+                    subreddit: Some(caps[2].to_string()),
+                    sort: "new".to_string(),
+                    time: "week".to_string(),
+                    ..Default::default()
+                }),
+            },
+
+            // === 3 component patterns ===
+
+            // "top <query> in <subreddit>"
+            Pattern {
+                regex: Regex::new(r"(?i)^top\s+(.+?)\s+in\s+r?/?(\w+)$").unwrap(),
+                extractor: Box::new(|caps| SearchParams {
+                    query: caps[1].trim().to_string(),
+                    subreddit: Some(caps[2].to_string()),
+                    sort: "top".to_string(),
+                    ..Default::default()
+                }),
+            },
+            // "top <query> from this week"
+            Pattern {
+                regex: Regex::new(r"(?i)^top\s+(.+?)\s+from\s+this\s+week$").unwrap(),
+                extractor: Box::new(|caps| SearchParams {
+                    query: caps[1].trim().to_string(),
+                    sort: "top".to_string(),
+                    time: "week".to_string(),
+                    ..Default::default()
+                }),
+            },
+            // "top <query> from this month"
+            Pattern {
+                regex: Regex::new(r"(?i)^top\s+(.+?)\s+from\s+this\s+month$").unwrap(),
+                extractor: Box::new(|caps| SearchParams {
+                    query: caps[1].trim().to_string(),
+                    sort: "top".to_string(),
+                    time: "month".to_string(),
+                    ..Default::default()
+                }),
+            },
+            // "recent <query> in <subreddit>"
+            Pattern {
+                regex: Regex::new(r"(?i)^recent\s+(.+?)\s+in\s+r?/?(\w+)$").unwrap(),
+                extractor: Box::new(|caps| SearchParams {
+                    query: caps[1].trim().to_string(),
+                    subreddit: Some(caps[2].to_string()),
+                    sort: "new".to_string(),
+                    ..Default::default()
+                }),
+            },
+            // "<query> in <subreddit> from this week"
+            Pattern {
+                regex: Regex::new(r"(?i)^(.+?)\s+in\s+r?/?(\w+)\s+from\s+this\s+week$").unwrap(),
+                extractor: Box::new(|caps| SearchParams {
+                    query: caps[1].trim().to_string(),
+                    subreddit: Some(caps[2].to_string()),
+                    time: "week".to_string(),
+                    ..Default::default()
+                }),
+            },
+            // "posts about <query> in <subreddit>"
+            Pattern {
+                regex: Regex::new(r"(?i)^posts?\s+about\s+(.+?)\s+in\s+r?/?(\w+)$").unwrap(),
                 extractor: Box::new(|caps| SearchParams {
                     query: caps[1].trim().to_string(),
                     subreddit: Some(caps[2].to_string()),
                     ..Default::default()
                 }),
             },
-            // "<query> from <subreddit>"
-            Pattern {
-                regex: Regex::new(r"(?i)^(.+?)\s+from\s+r?/?(\w+)$").unwrap(),
-                extractor: Box::new(|caps| SearchParams {
-                    query: caps[1].trim().to_string(),
-                    subreddit: Some(caps[2].to_string()),
-                    ..Default::default()
-                }),
-            },
+
+            // === 2 component patterns ===
+
             // "top <query>"
             Pattern {
                 regex: Regex::new(r"(?i)^top\s+(.+)$").unwrap(),
                 extractor: Box::new(|caps| SearchParams {
                     query: caps[1].trim().to_string(),
                     sort: "top".to_string(),
+                    ..Default::default()
+                }),
+            },
+            // "recent <query>"
+            Pattern {
+                regex: Regex::new(r"(?i)^recent\s+(.+)$").unwrap(),
+                extractor: Box::new(|caps| SearchParams {
+                    query: caps[1].trim().to_string(),
+                    sort: "new".to_string(),
+                    ..Default::default()
+                }),
+            },
+            // "<query> in <subreddit>"
+            Pattern {
+                regex: Regex::new(r"(?i)^(.+?)\s+in\s+r?/?(\w+)$").unwrap(),
+                extractor: Box::new(|caps| SearchParams {
+                    query: caps[1].trim().to_string(),
+                    subreddit: Some(caps[2].to_string()),
                     ..Default::default()
                 }),
             },
@@ -87,74 +184,12 @@ impl PatternMatcher {
                     ..Default::default()
                 }),
             },
-            // "recent <query>"
-            Pattern {
-                regex: Regex::new(r"(?i)^recent\s+(.+)$").unwrap(),
-                extractor: Box::new(|caps| SearchParams {
-                    query: caps[1].trim().to_string(),
-                    sort: "new".to_string(),
-                    ..Default::default()
-                }),
-            },
             // "<query> limit <n>"
             Pattern {
                 regex: Regex::new(r"(?i)^(.+?)\s+limit\s+(\d+)$").unwrap(),
                 extractor: Box::new(|caps| SearchParams {
                     query: caps[1].trim().to_string(),
                     limit: caps[2].parse().unwrap_or(25),
-                    ..Default::default()
-                }),
-            },
-            // "posts about <query> in <subreddit>"
-            Pattern {
-                regex: Regex::new(r"(?i)^posts?\s+about\s+(.+?)\s+in\s+r?/?(\w+)$").unwrap(),
-                extractor: Box::new(|caps| SearchParams {
-                    query: caps[1].trim().to_string(),
-                    subreddit: Some(caps[2].to_string()),
-                    ..Default::default()
-                }),
-            },
-            // "top <query> in <subreddit>"
-            Pattern {
-                regex: Regex::new(r"(?i)^top\s+(.+?)\s+in\s+r?/?(\w+)$").unwrap(),
-                extractor: Box::new(|caps| SearchParams {
-                    query: caps[1].trim().to_string(),
-                    subreddit: Some(caps[2].to_string()),
-                    sort: "top".to_string(),
-                    ..Default::default()
-                }),
-            },
-            // "top <query> from this week"
-            Pattern {
-                regex: Regex::new(r"(?i)^top\s+(.+?)\s+from\s+this\s+week$").unwrap(),
-                extractor: Box::new(|caps| SearchParams {
-                    query: caps[1].trim().to_string(),
-                    sort: "top".to_string(),
-                    time: "week".to_string(),
-                    ..Default::default()
-                }),
-            },
-            // "top <query> in <subreddit> from this week"
-            Pattern {
-                regex: Regex::new(
-                    r"(?i)^top\s+(.+?)\s+in\s+r?/?(\w+)\s+from\s+this\s+week$",
-                )
-                .unwrap(),
-                extractor: Box::new(|caps| SearchParams {
-                    query: caps[1].trim().to_string(),
-                    subreddit: Some(caps[2].to_string()),
-                    sort: "top".to_string(),
-                    time: "week".to_string(),
-                    ..Default::default()
-                }),
-            },
-            // "<query> in <subreddit> from this week"
-            Pattern {
-                regex: Regex::new(r"(?i)^(.+?)\s+in\s+r?/?(\w+)\s+from\s+this\s+week$").unwrap(),
-                extractor: Box::new(|caps| SearchParams {
-                    query: caps[1].trim().to_string(),
-                    subreddit: Some(caps[2].to_string()),
-                    time: "week".to_string(),
                     ..Default::default()
                 }),
             },

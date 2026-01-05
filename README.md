@@ -57,7 +57,7 @@ rdt post comments <post_id> --limit 50
 
 ```bash
 rdt auth status
-rdt auth login   # OAuth flow (coming soon)
+rdt auth login   # Opens browser for OAuth (requires Reddit API approval)
 rdt auth logout
 ```
 
@@ -94,12 +94,11 @@ Config stored at `~/.config/rdt/config.toml`:
 
 ```toml
 [reddit]
-client_id = "your_client_id"
-client_secret = "your_client_secret"
+client_id = "your_client_id"  # Required for OAuth, optional for read-only
 
 [aws]
 region = "us-east-1"
-bedrock_model_id = "anthropic.claude-3-haiku-20240307-v1:0"
+bedrock_model_id = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 ```
 
 ## Natural Language Patterns
@@ -115,6 +114,32 @@ These patterns are matched instantly (no AI needed):
 | `<query> limit <n>` | "rust limit 5" | limit=5 |
 
 Complex queries fall back to Claude Haiku on AWS Bedrock.
+
+## Roadmap
+
+### Read Operations
+- [x] Search posts/comments
+- [x] Get post details and comments
+- [x] Subreddit info and posts
+- [x] User info and posts
+- [x] JSON output
+
+### Natural Language Processing
+- [x] Pattern matching for common queries
+- [x] AI fallback (Claude Haiku on Bedrock)
+- [ ] Evals for AI query parsing
+
+### Write Operations 🚧
+*Blocked: Requires [Reddit API approval](https://support.reddithelp.com/hc/en-us/articles/42728983564564)*
+- [x] OAuth browser flow (ready)
+- [ ] Create posts
+- [ ] Create comments
+- [ ] Voting
+
+### Future
+- [ ] Monitor mode (subreddit polling)
+- [ ] TUI mode (ratatui)
+- [ ] Table output format
 
 ## License
 

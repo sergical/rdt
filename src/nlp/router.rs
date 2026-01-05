@@ -95,8 +95,16 @@ impl NlpRouter {
     async fn parse_with_ai(&self, query: &str) -> Result<SearchParams> {
         let config = Config::load()?;
 
-        // Check if AWS Bedrock is configured
-        let aws_config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
+        // Load AWS config with region from config or default to us-east-1
+        let region = config
+            .aws
+            .region
+            .as_deref()
+            .unwrap_or("us-east-1");
+        let aws_config = aws_config::defaults(aws_config::BehaviorVersion::latest())
+            .region(aws_config::Region::new(region.to_string()))
+            .load()
+            .await;
 
         let bedrock = aws_sdk_bedrockruntime::Client::new(&aws_config);
 
@@ -141,20 +149,37 @@ Now parse the query and return only the JSON:"#,
             ))
             .send()
             .await
-            .map_err(|e| RdtError::Bedrock(e.to_string()))?;
+            .map_err(|e| RdtError::Bedrock(format!("Bedrock invoke error: {}", e)))?;
+
+        let body_bytes = response.body().as_ref();
+        if body_bytes.is_empty() {
+            return Err(RdtError::Bedrock("Empty response body from Bedrock".to_string()));
+        }
 
         let response_body: serde_json::Value =
-            serde_json::from_slice(response.body().as_ref())
-                .map_err(|e| RdtError::Bedrock(e.to_string()))?;
+            serde_json::from_slice(body_bytes)
+                .map_err(|e| RdtError::Bedrock(format!("JSON parse error: {}", e)))?;
 
         // Extract the text content from Claude's response
         let text = response_body["content"][0]["text"]
             .as_str()
             .ok_or_else(|| RdtError::Bedrock("No text in response".to_string()))?;
 
+        // Extract JSON from markdown code blocks if present
+        let json_text = if text.contains("```") {
+            // Find JSON between code blocks
+            text.lines()
+                .skip_while(|line| !line.starts_with('{'))
+                .take_while(|line| !line.starts_with("```"))
+                .collect::<Vec<_>>()
+                .join("\n")
+        } else {
+            text.to_string()
+        };
+
         // Parse the JSON from Claude's response
         let parsed: serde_json::Value =
-            serde_json::from_str(text).map_err(|e| RdtError::Bedrock(e.to_string()))?;
+            serde_json::from_str(&json_text).map_err(|e| RdtError::Bedrock(format!("Failed to parse AI response: {}", e)))?;
 
         Ok(SearchParams {
             query: parsed["query"]

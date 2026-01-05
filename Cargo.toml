@@ -45,5 +45,11 @@ chrono = { version = "0.4", features = ["serde"] }
 url = "2"
 urlencoding = "2"
 
+# Browser opening
+open = "5"
+
+# Random string generation
+rand = "0.8"
+
 [dev-dependencies]
 tokio-test = "0.4"
