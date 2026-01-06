@@ -88,7 +88,14 @@ impl NlpRouter {
         }
 
         // Layer 2: AI fallback (Claude Haiku on Bedrock)
-        self.parse_with_ai(query).await
+        // If Bedrock fails, fall back to raw query
+        match self.parse_with_ai(query).await {
+            Ok(params) => Ok(params),
+            Err(_) => Ok(SearchParams {
+                query: query.to_string(),
+                ..Default::default()
+            }),
+        }
     }
 
     /// Use Claude Haiku on Bedrock to parse complex queries
