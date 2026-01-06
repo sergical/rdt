@@ -1,13 +1,13 @@
 # rdt
 
-Reddit CLI for AI agents. Like `gh` for GitHub, but for Reddit.
+Reddit in your terminal. Like `gh` for GitHub, but for Reddit.
 
 ## Features
 
-- **JSON output by default** - designed for AI agent consumption
+- **TUI mode** - browse Reddit interactively with `rdt tui`
+- **JSON output** - pipe-friendly for scripts and automation
 - **Natural language search** - `rdt search "rust in programming"` automatically searches r/programming
-- **Pattern matching** - common queries resolved instantly without AI
-- **AI fallback** - complex queries routed to Claude Haiku on AWS Bedrock
+- **Smart query parsing** - common patterns resolved instantly, complex queries use AI
 
 ## Installation
 
@@ -136,9 +136,14 @@ Complex queries fall back to Claude Haiku on AWS Bedrock.
 - [ ] Create comments
 - [ ] Voting
 
+### TUI Mode
+- [x] Interactive browser (`rdt tui`)
+- [x] Search with NLP
+- [x] Post list navigation
+- [x] Comment viewing
+
 ### Future
 - [ ] Monitor mode (subreddit polling)
-- [ ] TUI mode (ratatui)
 - [ ] Table output format
 
 ## License

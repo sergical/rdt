@@ -34,6 +34,9 @@ pub enum RdtError {
 
     #[error("Rate limited. Please wait before making more requests.")]
     RateLimited,
+
+    #[error("TUI error: {0}")]
+    Tui(String),
 }
 
 pub type Result<T> = std::result::Result<T, RdtError>;

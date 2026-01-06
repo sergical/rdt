@@ -4,6 +4,7 @@ mod config;
 mod error;
 mod nlp;
 mod output;
+mod tui;
 
 use clap::{Parser, Subcommand};
 use cli::{auth, post, search, subreddit, user};
@@ -71,6 +72,9 @@ enum Commands {
         #[command(subcommand)]
         action: UserAction,
     },
+
+    /// Interactive TUI mode
+    Tui,
 }
 
 #[derive(Subcommand)]
@@ -190,6 +194,7 @@ async fn main() {
                 limit,
             } => user::posts(&username, &sort, limit, &cli.format).await,
         },
+        Commands::Tui => tui::run().await,
     };
 
     if let Err(e) = result {

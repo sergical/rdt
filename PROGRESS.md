@@ -25,15 +25,20 @@
 ## In Progress
 
 - [x] Verify Bedrock model IDs
-- [ ] Test AI fallback with real AWS credentials
+- [x] Test AI fallback with real AWS credentials (working with Haiku 4.5)
 
-## Not Started
+## Blocked
 
-### Phase 3: Write Operations
+### Phase 3: Write Operations (requires Reddit API approval)
+Reddit now requires pre-approval before creating apps. Submit request at:
+https://support.reddithelp.com/hc/en-us/articles/42728983564564
+
 - [ ] Create posts (text/link)
 - [ ] Create comments
 - [ ] Voting (up/down/clear)
 - [ ] Delete own content
+
+## Not Started
 
 ### Phase 4: Monitor
 - [ ] Subreddit polling
@@ -60,9 +65,9 @@
 
 ## Known Issues
 
-1. Pattern matching doesn't compose (e.g., "top rust from this week" only matches "top")
-2. OAuth login not implemented (read-only public API for now)
-3. `--limit` flag ignored when NLP parsing is used
+1. ~~Pattern matching doesn't compose (e.g., "top rust from this week" only matches "top")~~ **FIXED** - reordered patterns so specific ones match first
+2. ~~OAuth login not implemented (read-only public API for now)~~ **FIXED** - Browser OAuth flow implemented
+3. ~~`--limit` flag ignored when NLP parsing is used~~ **FIXED** - CLI flags now override NLP-parsed values
 
 ## Notes
 

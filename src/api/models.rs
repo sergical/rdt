@@ -61,10 +61,34 @@ pub struct Post {
     pub locked: bool,
     #[serde(default)]
     pub link_flair_text: Option<String>,
+    #[serde(default)]
+    pub thumbnail: Option<String>,
+    #[serde(default)]
+    pub preview: Option<Preview>,
+}
+
+/// Reddit preview images
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Preview {
+    pub images: Vec<PreviewImage>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PreviewImage {
+    pub source: ImageSource,
+    #[serde(default)]
+    pub resolutions: Vec<ImageSource>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ImageSource {
+    pub url: String,
+    pub width: u32,
+    pub height: u32,
 }
 
 /// Simplified post for output
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct PostSummary {
     pub id: String,
     pub title: String,
@@ -74,10 +98,23 @@ pub struct PostSummary {
     pub score: i64,
     pub num_comments: u64,
     pub created_utc: f64,
+    pub thumbnail: Option<String>,
+    pub image_url: Option<String>,
 }
 
 impl From<Post> for PostSummary {
     fn from(p: Post) -> Self {
+        // Get the best image URL from preview if available
+        let image_url = p.preview.and_then(|preview| {
+            preview.images.first().map(|img| {
+                // HTML entity decode the URL (Reddit encodes &amp; etc)
+                img.source.url.replace("&amp;", "&")
+            })
+        });
+
+        // Only use thumbnail if it's a valid URL (not "self", "default", "nsfw", etc)
+        let thumbnail = p.thumbnail.filter(|t| t.starts_with("http"));
+
         Self {
             id: p.id,
             title: p.title,
@@ -87,6 +124,8 @@ impl From<Post> for PostSummary {
             score: p.score,
             num_comments: p.num_comments,
             created_utc: p.created_utc,
+            thumbnail,
+            image_url,
         }
     }
 }
@@ -108,7 +147,7 @@ pub struct Comment {
 }
 
 /// Simplified comment for output
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct CommentSummary {
     pub id: String,
     pub author: String,
@@ -116,10 +155,19 @@ pub struct CommentSummary {
     pub score: i64,
     pub created_utc: f64,
     pub depth: u32,
+    pub reply_count: usize,
+    pub replies: Vec<CommentSummary>, // Nested replies (loaded on demand)
+    pub expanded: bool,
 }
 
-impl From<Comment> for CommentSummary {
-    fn from(c: Comment) -> Self {
+impl CommentSummary {
+    pub fn from_comment(c: Comment, include_replies: bool) -> Self {
+        let (reply_count, replies) = if include_replies {
+            parse_replies(&c.replies, c.depth.unwrap_or(0) + 1)
+        } else {
+            (count_replies(&c.replies), Vec::new())
+        };
+
         Self {
             id: c.id,
             author: c.author,
@@ -127,7 +175,52 @@ impl From<Comment> for CommentSummary {
             score: c.score,
             created_utc: c.created_utc,
             depth: c.depth.unwrap_or(0),
+            reply_count,
+            replies,
+            expanded: false,
         }
+    }
+}
+
+fn count_replies(replies: &serde_json::Value) -> usize {
+    if let Some(obj) = replies.as_object() {
+        if let Some(data) = obj.get("data") {
+            if let Some(children) = data.get("children") {
+                if let Some(arr) = children.as_array() {
+                    return arr.iter().filter(|c| c.get("kind") == Some(&serde_json::json!("t1"))).count();
+                }
+            }
+        }
+    }
+    0
+}
+
+fn parse_replies(replies: &serde_json::Value, depth: u32) -> (usize, Vec<CommentSummary>) {
+    let mut result = Vec::new();
+    if let Some(obj) = replies.as_object() {
+        if let Some(data) = obj.get("data") {
+            if let Some(children) = data.get("children") {
+                if let Some(arr) = children.as_array() {
+                    for child in arr {
+                        if child.get("kind") == Some(&serde_json::json!("t1")) {
+                            if let Some(data) = child.get("data") {
+                                if let Ok(mut comment) = serde_json::from_value::<Comment>(data.clone()) {
+                                    comment.depth = Some(depth);
+                                    result.push(CommentSummary::from_comment(comment, true));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    (result.len(), result)
+}
+
+impl From<Comment> for CommentSummary {
+    fn from(c: Comment) -> Self {
+        CommentSummary::from_comment(c, false) // Don't load replies by default
     }
 }
 

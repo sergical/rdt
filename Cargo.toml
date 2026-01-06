@@ -51,5 +51,11 @@ open = "5"
 # Random string generation
 rand = "0.8"
 
+# TUI
+ratatui = "0.30"
+crossterm = "0.28"
+ratatui-image = { version = "10", default-features = false, features = ["crossterm", "image-defaults"] }
+image = "0.25"
+
 [dev-dependencies]
 tokio-test = "0.4"
