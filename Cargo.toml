@@ -9,6 +9,10 @@ readme = "README.md"
 keywords = ["reddit", "cli", "tui", "terminal"]
 categories = ["command-line-utilities"]
 
+[[bin]]
+name = "rdt"
+path = "src/main.rs"
+
 [dependencies]
 # CLI
 clap = { version = "4", features = ["derive"] }
