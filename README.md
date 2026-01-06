@@ -11,9 +11,34 @@ Reddit in your terminal. Like `gh` for GitHub, but for Reddit.
 
 ## Installation
 
+### Homebrew (macOS/Linux)
+
 ```bash
+brew install sergical/tap/rdt
+```
+
+### Cargo (Rust)
+
+```bash
+cargo install rdtcli
+```
+
+### From source
+
+```bash
+git clone https://github.com/sergical/rdt.git
+cd rdt
 cargo install --path .
 ```
+
+### Pre-built binaries
+
+Download from [GitHub Releases](https://github.com/sergical/rdt/releases):
+
+- **macOS** (Apple Silicon): `rdt-aarch64-apple-darwin.tar.gz`
+- **macOS** (Intel): `rdt-x86_64-apple-darwin.tar.gz`
+- **Linux** (x64): `rdt-x86_64-unknown-linux-gnu.tar.gz`
+- **Windows** (x64): `rdt-x86_64-pc-windows-msvc.zip`
 
 ## Usage
 

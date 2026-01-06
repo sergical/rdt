@@ -1,10 +1,13 @@
 [package]
-name = "rdt"
+name = "rdtcli"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 description = "Reddit CLI for AI agents - search and interact with Reddit from the command line"
 license = "MIT"
-repository = "https://github.com/user/rdt"
+repository = "https://github.com/sergical/rdt"
+readme = "README.md"
+keywords = ["reddit", "cli", "tui", "terminal"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 # CLI
