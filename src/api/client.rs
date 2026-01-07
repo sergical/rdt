@@ -1,4 +1,7 @@
-use crate::api::models::*;
+use crate::api::models::{
+    Comment, CommentSummary, Listing, Post, PostSummary, SearchResults, Subreddit,
+    SubredditSummary, User, UserSummary,
+};
 use crate::config::Config;
 use crate::error::{RdtError, Result};
 use crate::nlp::router::SearchParams;
@@ -170,7 +173,8 @@ impl RedditClient {
             for thing in response[1].data.children.iter() {
                 if thing.kind == "t1" {
                     if let Ok(comment) = serde_json::from_value::<Comment>(thing.data.clone()) {
-                        comments.push(comment.into());
+                        // Load replies (true) so expand/collapse works
+                        comments.push(CommentSummary::from_comment(comment, true));
                     }
                 }
             }

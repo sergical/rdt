@@ -209,18 +209,25 @@ fn render_post_list(
 fn render_post_detail(frame: &mut Frame, app: &App, area: Rect) {
     let has_image = app.current_image.borrow().is_some();
 
+    // Calculate header height based on whether post has body
+    let header_height = if app.current_post.as_ref().and_then(|p| p.selftext.as_ref()).is_some() {
+        12 // More room for posts with body
+    } else {
+        5  // Compact for title-only posts
+    };
+
     // Header at top, then content below
     let main_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(5), // Post header (compact)
-            Constraint::Min(0),    // Content area
+            Constraint::Length(header_height),
+            Constraint::Min(0), // Content area
         ])
         .split(area);
 
-    // Post header
+    // Post header with body
     if let Some(ref post) = app.current_post {
-        let header_text = vec![
+        let mut header_text = vec![
             Line::from(Span::styled(
                 &post.title,
                 Style::default().add_modifier(Modifier::BOLD),
@@ -243,6 +250,12 @@ fn render_post_detail(frame: &mut Frame, app: &App, area: Rect) {
                 Span::raw(format!(" | {} comments", post.num_comments)),
             ]),
         ];
+
+        // Add post body if it exists
+        if let Some(ref body) = post.selftext {
+            header_text.push(Line::from("")); // blank line
+            header_text.push(Line::from(Span::raw(body.as_str())));
+        }
 
         let header = Paragraph::new(header_text)
             .block(Block::default().borders(Borders::ALL).title(" Post "))
@@ -326,7 +339,7 @@ fn render_post_detail(frame: &mut Frame, app: &App, area: Rect) {
                 ]),
                 Line::from(vec![
                     Span::raw(indent),
-                    Span::raw(truncate_comment(&comment.body, 80)),
+                    Span::raw(comment.body.replace('\n', " ")), // Full length, just collapse newlines
                 ]),
                 Line::from(""),
             ];

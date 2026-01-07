@@ -100,6 +100,7 @@ pub struct PostSummary {
     pub created_utc: f64,
     pub thumbnail: Option<String>,
     pub image_url: Option<String>,
+    pub selftext: Option<String>,
 }
 
 impl From<Post> for PostSummary {
@@ -126,6 +127,7 @@ impl From<Post> for PostSummary {
             created_utc: p.created_utc,
             thumbnail,
             image_url,
+            selftext: p.selftext.filter(|s| !s.is_empty()),
         }
     }
 }
