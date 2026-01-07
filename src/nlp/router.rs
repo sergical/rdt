@@ -4,6 +4,14 @@ use crate::nlp::patterns::PatternMatcher;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
+/// How the query was parsed
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum ParseMethod {
+    Pattern,
+    AI,
+    Fallback,
+}
+
 /// Search parameters extracted from query
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchParams {
@@ -13,6 +21,8 @@ pub struct SearchParams {
     pub time: String,
     pub limit: u32,
     pub search_type: String,
+    #[serde(skip)]
+    pub parse_method: Option<ParseMethod>,
 }
 
 impl Default for SearchParams {
@@ -24,6 +34,7 @@ impl Default for SearchParams {
             time: "all".to_string(),
             limit: 25,
             search_type: "posts".to_string(),
+            parse_method: None,
         }
     }
 }
@@ -83,16 +94,21 @@ impl NlpRouter {
     /// Parse query using pattern matching first, then AI fallback
     pub async fn parse_query(&self, query: &str) -> Result<SearchParams> {
         // Layer 1: Try pattern matching (instant, free)
-        if let Some(params) = self.pattern_matcher.try_match(query) {
+        if let Some(mut params) = self.pattern_matcher.try_match(query) {
+            params.parse_method = Some(ParseMethod::Pattern);
             return Ok(params);
         }
 
         // Layer 2: AI fallback (Claude Haiku on Bedrock)
         // If Bedrock fails, fall back to raw query
         match self.parse_with_ai(query).await {
-            Ok(params) => Ok(params),
+            Ok(mut params) => {
+                params.parse_method = Some(ParseMethod::AI);
+                Ok(params)
+            }
             Err(_) => Ok(SearchParams {
                 query: query.to_string(),
+                parse_method: Some(ParseMethod::Fallback),
                 ..Default::default()
             }),
         }
@@ -201,6 +217,7 @@ Now parse the query and return only the JSON:"#,
             time: parsed["time"].as_str().unwrap_or("all").to_string(),
             limit: parsed["limit"].as_u64().unwrap_or(25) as u32,
             search_type: "posts".to_string(),
+            parse_method: None, // Set by caller
         })
     }
 }

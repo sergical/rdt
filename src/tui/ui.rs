@@ -51,7 +51,7 @@ pub fn render(frame: &mut Frame, app: &App) {
 
     // Show loading indicator
     if app.loading {
-        render_loading(frame);
+        render_loading(frame, &app.loading_message);
     }
 }
 
@@ -127,6 +127,26 @@ fn render_search_results(frame: &mut Frame, app: &App, area: Rect) {
         }
     };
 
+    // Split area for debug info + results
+    let chunks = if app.debug_info.is_some() {
+        Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Length(1), Constraint::Min(0)])
+            .split(area)
+    } else {
+        Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Length(0), Constraint::Min(0)])
+            .split(area)
+    };
+
+    // Debug info line
+    if let Some(ref debug) = app.debug_info {
+        let debug_text = Paragraph::new(debug.as_str())
+            .style(Style::default().fg(Color::Rgb(128, 128, 128)));
+        frame.render_widget(debug_text, chunks[0]);
+    }
+
     let title = match &app.search_results {
         Some(r) => format!(
             " {} | sort:{} time:{} ({}) ",
@@ -135,7 +155,7 @@ fn render_search_results(frame: &mut Frame, app: &App, area: Rect) {
         None => " Results ".to_string(),
     };
 
-    render_post_list(frame, posts, app.selected_post_index, &title, area);
+    render_post_list(frame, posts, app.selected_post_index, &title, chunks[1]);
 }
 
 /// Shared post list renderer
@@ -360,12 +380,20 @@ fn render_error_popup(frame: &mut Frame, error: &str) {
     frame.render_widget(paragraph, area);
 }
 
-fn render_loading(frame: &mut Frame) {
-    let area = centered_rect(30, 5, frame.area());
+fn render_loading(frame: &mut Frame, message: &str) {
+    let area = centered_rect(40, 5, frame.area());
     frame.render_widget(Clear, area);
 
-    let paragraph = Paragraph::new("Loading...")
-        .block(Block::default().borders(Borders::ALL))
+    // Simple spinner using frame count (approximated by time)
+    let spinners = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+    let idx = (std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis() / 100) as usize % spinners.len();
+
+    let text = format!("{} {}", spinners[idx], message);
+    let paragraph = Paragraph::new(text)
+        .block(Block::default().borders(Borders::ALL).title(" Loading "))
         .style(Style::default().fg(Color::Rgb(100, 149, 237))); // Cornflower blue
     frame.render_widget(paragraph, area);
 }

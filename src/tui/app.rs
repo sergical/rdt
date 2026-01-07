@@ -47,7 +47,11 @@ pub struct App {
 
     // Loading state
     pub loading: bool,
+    pub loading_message: String,
     pub error_message: Option<String>,
+
+    // Debug info
+    pub debug_info: Option<String>,
 
     // Scroll state for post detail
     pub scroll_offset: u16,
@@ -77,7 +81,9 @@ impl App {
             comments: Vec::new(),
             selected_comment_index: 0,
             loading: true, // Start loading
+            loading_message: "Loading...".to_string(),
             error_message: None,
+            debug_info: None,
             scroll_offset: 0,
             image_picker,
             current_image: RefCell::new(None),
@@ -87,6 +93,7 @@ impl App {
     /// Load r/all posts for homepage
     pub async fn load_home_posts(&mut self) -> Result<()> {
         self.loading = true;
+        self.loading_message = "Loading r/all...".to_string();
         let client = RedditClient::new().await?;
         match client.get_subreddit_posts("all", "hot", "day", 25).await {
             Ok(posts) => {
@@ -422,20 +429,38 @@ impl App {
     }
 
     async fn perform_search(&mut self) -> Result<()> {
+        use crate::nlp::router::ParseMethod;
+
         if self.search_input.is_empty() {
             return Ok(());
         }
 
         self.loading = true;
+        self.loading_message = "Parsing query...".to_string();
         self.error_message = None;
 
         let router = NlpRouter::new();
         let mut params = router.parse_query(&self.search_input).await?;
 
+        // Build debug info
+        let method_str = match params.parse_method {
+            Some(ParseMethod::Pattern) => "pattern",
+            Some(ParseMethod::AI) => "AI",
+            Some(ParseMethod::Fallback) => "fallback (no AI)",
+            None => "unknown",
+        };
+        self.debug_info = Some(format!(
+            "[{}] query=\"{}\" sub={:?}",
+            method_str,
+            params.query,
+            params.subreddit
+        ));
+
         // Apply UI sort/time overrides
         params.sort = self.search_sort.clone();
         params.time = self.search_time.clone();
 
+        self.loading_message = "Searching Reddit...".to_string();
         let client = RedditClient::new().await?;
         match client.search(&params).await {
             Ok(results) => {

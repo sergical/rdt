@@ -30,6 +30,7 @@ pub async fn search(
             time: time.to_string(),
             limit,
             search_type: search_type.to_string(),
+            parse_method: None,
         }
     } else {
         // Try NLP parsing (pattern matching first, then AI if needed)
