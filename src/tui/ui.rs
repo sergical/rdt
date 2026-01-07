@@ -178,6 +178,7 @@ fn render_post_list(
                 Style::default()
             };
 
+            let age = format_age(post.created_utc);
             let content = Line::from(vec![
                 Span::styled(
                     format!("{:>5} ", post.score),
@@ -186,6 +187,10 @@ fn render_post_list(
                 Span::styled(
                     format!("r/{:<15} ", post.subreddit),
                     Style::default().fg(Color::Rgb(70, 130, 180)), // Steel blue for subreddits
+                ),
+                Span::styled(
+                    format!("{:<4} ", age),
+                    Style::default().fg(Color::Rgb(100, 100, 100)), // Gray for age
                 ),
                 Span::raw(&post.title),
             ]);
@@ -296,6 +301,7 @@ fn render_post_detail(frame: &mut Frame, app: &App, area: Rect) {
                 String::new()
             };
 
+            let age = format_age(comment.created_utc);
             let lines = vec![
                 Line::from(vec![
                     Span::raw(indent.clone()),
@@ -307,6 +313,11 @@ fn render_post_detail(frame: &mut Frame, app: &App, area: Rect) {
                     Span::styled(
                         format!("{} pts", comment.score),
                         Style::default().fg(Color::Rgb(255, 139, 61)),
+                    ),
+                    Span::raw(" "),
+                    Span::styled(
+                        age,
+                        Style::default().fg(Color::Rgb(100, 100, 100)),
                     ),
                     Span::styled(
                         reply_indicator,
@@ -426,5 +437,30 @@ fn truncate_comment(s: &str, max_len: usize) -> String {
         format!("{}...", &s[..max_len])
     } else {
         s
+    }
+}
+
+/// Format a timestamp as relative age (e.g., "2h", "3d", "1w")
+fn format_age(created_utc: f64) -> String {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs_f64();
+    let age_secs = (now - created_utc).max(0.0) as u64;
+
+    if age_secs < 60 {
+        format!("{}s", age_secs)
+    } else if age_secs < 3600 {
+        format!("{}m", age_secs / 60)
+    } else if age_secs < 86400 {
+        format!("{}h", age_secs / 3600)
+    } else if age_secs < 604800 {
+        format!("{}d", age_secs / 86400)
+    } else if age_secs < 2592000 {
+        format!("{}w", age_secs / 604800)
+    } else if age_secs < 31536000 {
+        format!("{}mo", age_secs / 2592000)
+    } else {
+        format!("{}y", age_secs / 31536000)
     }
 }
