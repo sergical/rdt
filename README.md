@@ -1,5 +1,14 @@
 # rdt
 
+```
+██████╗ ██████╗ ████████╗██╗   ██╗██╗
+██╔══██╗██╔══██╗╚══██╔══╝██║   ██║██║
+██████╔╝██║  ██║   ██║   ██║   ██║██║
+██╔══██╗██║  ██║   ██║   ██║   ██║██║
+██║  ██║██████╔╝   ██║   ╚██████╔╝██║
+╚═╝  ╚═╝╚═════╝    ╚═╝    ╚═════╝ ╚═╝
+```
+
 Reddit in your terminal. Like `gh` for GitHub, but for Reddit.
 
 ## Features
@@ -165,7 +174,9 @@ Complex queries fall back to Claude Haiku on AWS Bedrock.
 - [x] Interactive browser (`rdt tui`)
 - [x] Search with NLP
 - [x] Post list navigation
-- [x] Comment viewing
+- [x] Comment viewing with expandable threads
+- [x] Image preview support
+- [x] Timestamps on posts and comments
 
 ### Future
 - [ ] Monitor mode (subreddit polling)
